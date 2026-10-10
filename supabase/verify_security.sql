@@ -9,7 +9,7 @@ select
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public'
-  and c.relname in ('workouts', 'exercises', 'workout_sessions', 'session_exercises', 'session_sets')
+  and c.relname in ('profiles', 'workouts', 'exercises', 'workout_sessions', 'session_exercises', 'session_sets')
 order by c.relname;
 
 select
@@ -21,5 +21,5 @@ select
   cmd
 from pg_policies
 where schemaname = 'public'
-  and tablename in ('workouts', 'exercises', 'workout_sessions', 'session_exercises', 'session_sets')
+  and tablename in ('profiles', 'workouts', 'exercises', 'workout_sessions', 'session_exercises', 'session_sets')
 order by tablename, policyname;

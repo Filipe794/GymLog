@@ -10,22 +10,40 @@ import { Dashboard } from './pages/Dashboard'
 import { History } from './pages/History'
 import { Reports } from './pages/Reports'
 import { Workouts } from './pages/Workouts'
+import { Profile } from './pages/Profile'
 import type { Section } from './types'
 import { isSupabaseConfigured, supabase } from './lib/supabaseClient'
+import { useUserProfile } from './hooks/useUserProfile'
+import { deleteAuthenticatedAccount } from './services/accountService'
 
 function App() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard')
   const [authMode, setAuthMode] = useState<'login' | 'signup' | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured)
   const [signOutError, setSignOutError] = useState('')
   const [signingOut, setSigningOut] = useState(false)
+  const [accountDeletedMessage, setAccountDeletedMessage] = useState('')
+  const { username, loading: profileLoading, error: profileError, saveUsername } = useUserProfile(user?.id)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
+    let active = true
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Não foi possível restaurar a sessão.', error)
+      }
+      if (active) {
+        setUser(data.session?.user ?? null)
+        setAuthLoading(false)
+      }
+    })
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null))
-    return () => data.subscription.unsubscribe()
+    return () => {
+      active = false
+      data.subscription.unsubscribe()
+    }
   }, [])
 
   const handleSignOut = async () => {
@@ -35,6 +53,15 @@ function App() {
     const { error } = await supabase.auth.signOut()
     if (error) setSignOutError(`Não foi possível sair: ${error.message}`)
     setSigningOut(false)
+  }
+
+  const handleDeleteAccount = async (confirmation: string) => {
+    await deleteAuthenticatedAccount(confirmation)
+    await supabase.auth.signOut({ scope: 'local' })
+    setUser(null)
+    setActiveSection('dashboard')
+    setMobileMenuOpen(false)
+    setAccountDeletedMessage('Sua conta foi excluída permanentemente.')
   }
 
   const handleNavigate = (section: Section) => {
@@ -53,19 +80,22 @@ function App() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [mobileMenuOpen])
 
+  if (authLoading) return <div className="auth-page"><p>Carregando...</p></div>
   if (!user && authMode) return <AuthPanel initialMode={authMode} onBack={() => setAuthMode(null)} />
-  if (!user) return <LandingPage onAuth={setAuthMode} />
+  if (!user) return <LandingPage onAuth={setAuthMode} message={accountDeletedMessage} />
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <Dashboard onNavigate={handleNavigate} userId={user?.id} />
+        return <Dashboard onNavigate={handleNavigate} userId={user?.id} username={username} />
       case 'workouts':
         return <Workouts userId={user?.id} />
       case 'history':
         return <History userId={user?.id} />
       case 'reports':
         return <Reports userId={user?.id} />
+      case 'profile':
+        return <Profile user={user} username={username} loading={profileLoading} onSaveUsername={async (nextUsername) => { await saveUsername(nextUsername) }} onDeleteAccount={handleDeleteAccount} />
       default:
         return <EmptyState title="Página não encontrada" description="Selecione uma seção para continuar." />
     }
@@ -76,8 +106,9 @@ function App() {
       <Sidebar activeSection={activeSection} onNavigate={handleNavigate} isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} />}
       <main className="main-content">
-        <TopBar activeSection={activeSection} onMenuToggle={() => setMobileMenuOpen((open) => !open)} mobileMenuOpen={mobileMenuOpen} onSignOut={handleSignOut} signingOut={signingOut} showSignOut={isSupabaseConfigured && Boolean(user)} />
+        <TopBar activeSection={activeSection} onMenuToggle={() => setMobileMenuOpen((open) => !open)} mobileMenuOpen={mobileMenuOpen} onSignOut={handleSignOut} signingOut={signingOut} showSignOut={isSupabaseConfigured && Boolean(user)} username={profileLoading ? null : username} onProfile={() => handleNavigate('profile')} />
         {signOutError && <p className="auth-message sign-out-error" role="alert">{signOutError}</p>}
+        {profileError && <p className="auth-message sign-out-error" role="alert">Não foi possível carregar seu perfil: {profileError}</p>}
         <div className="page-content">{renderContent()}</div>
       </main>
       <BottomNavigation activeSection={activeSection} onNavigate={handleNavigate} />

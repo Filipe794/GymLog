@@ -1,4 +1,4 @@
-export type IconName = 'grid' | 'dumbbell' | 'calendar' | 'chart' | 'menu' | 'plus' | 'arrow' | 'edit' | 'trash' | 'up' | 'down' | 'close' | 'eye' | 'eye-off' | 'logout' | 'check'
+export type IconName = 'grid' | 'dumbbell' | 'calendar' | 'chart' | 'user' | 'menu' | 'plus' | 'arrow' | 'edit' | 'trash' | 'up' | 'down' | 'close' | 'eye' | 'eye-off' | 'logout' | 'check'
 
 type IconProps = {
   name: IconName
@@ -12,6 +12,7 @@ export function Icon({ name, size = 20 }: IconProps) {
   if (name === 'dumbbell') return <svg {...common}><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11" /></svg>
   if (name === 'calendar') return <svg {...common}><rect x="3" y="4.5" width="18" height="17" rx="2" /><path d="M16 2.5v4M8 2.5v4M3 9h18" /></svg>
   if (name === 'chart') return <svg {...common}><path d="M4 19V5M4 19h17M8 16v-4M12 16V8M16 16v-6M20 16v-9" /></svg>
+  if (name === 'user') return <svg {...common}><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c.8-3.5 3.3-5.5 7.5-5.5s6.7 2 7.5 5.5" /></svg>
   if (name === 'menu') return <svg {...common}><path d="M4 6h16M4 12h16M4 18h16" /></svg>
   if (name === 'plus') return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>
   if (name === 'edit') return <svg {...common}><path d="m4 16.5-.8 3.3 3.3-.8L18.2 7.3a2.3 2.3 0 0 0-3.3-3.3L3.2 15.7M13.5 5.5l3.3 3.3" /></svg>

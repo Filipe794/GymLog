@@ -1,5 +1,48 @@
 create extension if not exists pgcrypto;
 
+create table public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  username text not null check (username = btrim(username) and char_length(username) between 3 and 30),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index profiles_username_lower_idx on public.profiles (lower(username));
+
+create or replace function public.is_username_available(candidate_username text)
+returns boolean
+language sql
+security definer set search_path = public
+as $$
+  select not exists (
+    select 1 from public.profiles
+    where lower(username) = lower(btrim(candidate_username))
+  );
+$$;
+
+create or replace function public.handle_new_user_profile()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  new_username text := btrim(new.raw_user_meta_data ->> 'username');
+begin
+  if new_username is null or new_username = '' then
+    raise exception 'username_required';
+  end if;
+
+  insert into public.profiles (user_id, username)
+  values (new.id, new_username);
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_profile on auth.users;
+create trigger on_auth_user_created_profile
+  after insert on auth.users
+  for each row execute function public.handle_new_user_profile();
+
 create type public.session_status as enum ('in_progress', 'completed', 'cancelled');
 
 create table public.workouts (
@@ -71,11 +114,20 @@ create index sessions_user_id_started_at_idx on public.workout_sessions(user_id,
 create index exercises_workout_id_position_idx on public.exercises(workout_id, position);
 create index session_exercises_session_id_position_idx on public.session_exercises(session_id, position);
 
+alter table public.profiles enable row level security;
 alter table public.workouts enable row level security;
 alter table public.exercises enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.session_exercises enable row level security;
 alter table public.session_sets enable row level security;
+
+create policy "Users read their profile"
+  on public.profiles for select to authenticated
+  using (user_id = auth.uid());
+
+create policy "Users update their profile"
+  on public.profiles for update to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 create policy "Users manage their workouts"
   on public.workouts for all to authenticated

@@ -1,6 +1,6 @@
 import type { IconName } from './components/Icon'
 
-export type Section = 'dashboard' | 'workouts' | 'history' | 'reports'
+export type Section = 'dashboard' | 'workouts' | 'history' | 'reports' | 'profile'
 
 export type NavigationItem = {
   id: Section

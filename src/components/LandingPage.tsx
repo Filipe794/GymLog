@@ -6,6 +6,7 @@ type AuthMode = 'login' | 'signup'
 
 type LandingPageProps = {
   onAuth: (mode: AuthMode) => void
+  message?: string
 }
 
 const features = [
@@ -15,7 +16,7 @@ const features = [
   { icon: 'calendar' as const, title: 'Histórico centralizado', description: 'Mantenha os treinos realizados em um único lugar, sem depender de anotações dispersas.' },
 ]
 
-export function LandingPage({ onAuth }: LandingPageProps) {
+export function LandingPage({ onAuth, message }: LandingPageProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentYear = new Date().getFullYear()
 
@@ -52,6 +53,7 @@ export function LandingPage({ onAuth }: LandingPageProps) {
       </header>
 
       <main>
+        {message && <p className="landing-account-message" role="status">{message}</p>}
         <section className="landing-hero landing-container" id="inicio">
           <div className="landing-hero-copy">
             <p className="landing-kicker"><span /> ORGANIZAÇÃO QUE MOVE VOCÊ</p>
