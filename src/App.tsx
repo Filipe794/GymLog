@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js'
 import { BottomNavigation } from './components/BottomNavigation'
 import { AuthPanel } from './components/AuthPanel'
 import { EmptyState } from './components/EmptyState'
+import { LandingPage } from './components/LandingPage'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { Dashboard } from './pages/Dashboard'
@@ -14,6 +15,8 @@ import { isSupabaseConfigured, supabase } from './lib/supabaseClient'
 
 function App() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard')
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [signOutError, setSignOutError] = useState('')
   const [signingOut, setSigningOut] = useState(false)
@@ -34,12 +37,29 @@ function App() {
     setSigningOut(false)
   }
 
-  if (isSupabaseConfigured && !user) return <AuthPanel />
+  const handleNavigate = (section: Section) => {
+    setActiveSection(section)
+    setMobileMenuOpen(false)
+  }
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [mobileMenuOpen])
+
+  if (!user && authMode) return <AuthPanel initialMode={authMode} onBack={() => setAuthMode(null)} />
+  if (!user) return <LandingPage onAuth={setAuthMode} />
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <Dashboard onNavigate={setActiveSection} userId={user?.id} />
+        return <Dashboard onNavigate={handleNavigate} userId={user?.id} />
       case 'workouts':
         return <Workouts userId={user?.id} />
       case 'history':
@@ -53,13 +73,14 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} />
+      <Sidebar activeSection={activeSection} onNavigate={handleNavigate} isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} />}
       <main className="main-content">
-        <TopBar activeSection={activeSection} onSignOut={handleSignOut} signingOut={signingOut} showSignOut={isSupabaseConfigured && Boolean(user)} />
+        <TopBar activeSection={activeSection} onMenuToggle={() => setMobileMenuOpen((open) => !open)} mobileMenuOpen={mobileMenuOpen} onSignOut={handleSignOut} signingOut={signingOut} showSignOut={isSupabaseConfigured && Boolean(user)} />
         {signOutError && <p className="auth-message sign-out-error" role="alert">{signOutError}</p>}
         <div className="page-content">{renderContent()}</div>
       </main>
-      <BottomNavigation activeSection={activeSection} onNavigate={setActiveSection} />
+      <BottomNavigation activeSection={activeSection} onNavigate={handleNavigate} />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-export type IconName = 'grid' | 'dumbbell' | 'calendar' | 'chart' | 'menu' | 'plus' | 'arrow' | 'edit' | 'trash' | 'up' | 'down' | 'close' | 'eye' | 'eye-off' | 'logout'
+export type IconName = 'grid' | 'dumbbell' | 'calendar' | 'chart' | 'menu' | 'plus' | 'arrow' | 'edit' | 'trash' | 'up' | 'down' | 'close' | 'eye' | 'eye-off' | 'logout' | 'check'
 
 type IconProps = {
   name: IconName
@@ -22,5 +22,6 @@ export function Icon({ name, size = 20 }: IconProps) {
   if (name === 'eye') return <svg {...common}><path d="M2.5 12s3.2-5 9.5-5 9.5 5 9.5 5-3.2 5-9.5 5-9.5-5-9.5-5Z" /><circle cx="12" cy="12" r="2.2" /></svg>
   if (name === 'eye-off') return <svg {...common}><path d="m3 3 18 18M10.6 10.7a2.2 2.2 0 0 0 3 3M9.9 5.2A10.7 10.7 0 0 1 12 5c6.3 0 9.5 5 9.5 5a16 16 0 0 1-3.1 3.6M6.3 6.3C3.8 7.8 2.5 10 2.5 10s3.2 5 9.5 5c1 0 1.9-.1 2.7-.4" /></svg>
   if (name === 'logout') return <svg {...common}><path d="M10 5H5v14h5M14 8l4 4-4 4M9 12h9" /></svg>
+  if (name === 'check') return <svg {...common}><path d="m5 12 4 4L19 6" /></svg>
   return <svg {...common}><path d="M5 12h13M13 6l6 6-6 6" /></svg>
 }
