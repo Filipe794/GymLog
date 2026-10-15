@@ -1,119 +1,135 @@
-import { initialWorkouts } from '../data/workouts'
 import type { Exercise, Workout } from '../types'
 import { supabase } from '../lib/supabaseClient'
 
-type WorkoutRow = { id: string; code: Workout['id']; name: string; focus: string }
-type ExerciseRow = { id: string; workout_id: string; position: number; name: string; planned_sets: number; reps_range: string; muscle_group: string; notes: string | null }
+type WorkoutRow = { id: string; name: string; focus: string; archived_at: string | null }
+type ExerciseRow = {
+  id: string
+  name: string
+  planned_sets: number
+  reps_range: string
+  muscle_group: string
+  notes: string | null
+  archived_at: string | null
+}
+type AssignmentRow = { workout_id: string; exercise_id: string; position: number }
 
-const workoutCodes: Workout['id'][] = ['A', 'B', 'C']
-function toWorkout(row: WorkoutRow, exercises: ExerciseRow[]): Workout {
+function toExercise(row: ExerciseRow): Exercise {
   return {
-    id: row.code,
+    id: row.id,
     name: row.name,
-    focus: row.focus,
-    exercises: exercises
-      .filter((exercise) => exercise.workout_id === row.id)
-      .sort((a, b) => a.position - b.position)
-      .map((exercise) => ({
-        id: exercise.id,
-        name: exercise.name,
-        sets: exercise.planned_sets,
-        reps: exercise.reps_range,
-        muscleGroup: exercise.muscle_group,
-        notes: exercise.notes ?? '',
-      })),
+    sets: row.planned_sets,
+    reps: row.reps_range,
+    muscleGroup: row.muscle_group,
+    notes: row.notes ?? '',
+    archivedAt: row.archived_at,
   }
 }
 
 export async function fetchRemoteWorkouts(): Promise<Workout[]> {
   const { data: workoutRows, error: workoutError } = await supabase
     .from('workouts')
-    .select('id, code, name, focus')
-    .in('code', workoutCodes)
-    .order('code')
+    .select('id, name, focus, archived_at')
+    .order('created_at')
   if (workoutError) throw new Error(`Falha ao ler treinos: ${workoutError.message}`)
 
   const rows = (workoutRows ?? []) as WorkoutRow[]
-  if (rows.length !== workoutCodes.length || new Set(rows.map((row) => row.code)).size !== workoutCodes.length) {
-    throw new Error(`O Supabase retornou ${rows.length} de 3 treinos esperados (A, B e C).`)
-  }
-
-  const { data: exerciseRows, error: exerciseError } = await supabase
-    .from('exercises')
-    .select('id, workout_id, position, name, planned_sets, reps_range, muscle_group, notes')
-    .in('workout_id', rows.map((row) => row.id))
+  if (!rows.length) return []
+  const ids = rows.map((row) => row.id)
+  const { data: assignments, error: assignmentError } = await supabase
+    .from('workout_exercises')
+    .select('workout_id, exercise_id, position')
+    .in('workout_id', ids)
     .order('position')
-  if (exerciseError) throw new Error(`Falha ao ler exercícios planejados: ${exerciseError.message}`)
+  if (assignmentError) throw new Error(`Falha ao ler exercícios dos treinos: ${assignmentError.message}`)
 
-  return rows.map((row) => toWorkout(row, (exerciseRows ?? []) as ExerciseRow[]))
+  const exerciseIds = [...new Set(((assignments ?? []) as AssignmentRow[]).map((row) => row.exercise_id))]
+  const { data: exerciseRows, error: exerciseError } = exerciseIds.length
+    ? await supabase.from('exercise_library').select('id, name, planned_sets, reps_range, muscle_group, notes, archived_at').in('id', exerciseIds)
+    : { data: [], error: null }
+  if (exerciseError) throw new Error(`Falha ao ler a biblioteca de exercícios: ${exerciseError.message}`)
+
+  const exercises = new Map((exerciseRows ?? []).map((row) => [row.id, toExercise(row as ExerciseRow)]))
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    focus: row.focus,
+    archivedAt: row.archived_at,
+    exercises: ((assignments ?? []) as AssignmentRow[])
+      .filter((assignment) => assignment.workout_id === row.id)
+      .sort((a, b) => a.position - b.position)
+      .map((assignment) => exercises.get(assignment.exercise_id))
+      .filter((exercise): exercise is Exercise => Boolean(exercise)),
+  }))
 }
 
-async function upsertWorkout(userId: string, workout: Workout): Promise<WorkoutRow> {
-  const { data, error } = await supabase.from('workouts').upsert({
-    user_id: userId,
-    code: workout.id,
+export async function createRemoteWorkout(userId: string, name: string, focus: string): Promise<Workout> {
+  const { data, error } = await supabase.from('workouts').insert({ user_id: userId, name, focus }).select('id, name, focus, archived_at').single()
+  if (error) throw new Error(`Falha ao criar o treino: ${error.message}`)
+  return { ...(data as WorkoutRow), id: data.id, archivedAt: data.archived_at, exercises: [] }
+}
+
+export async function updateRemoteWorkout(workout: Workout): Promise<void> {
+  const { error } = await supabase.from('workouts').update({
     name: workout.name,
     focus: workout.focus,
+    archived_at: workout.archivedAt ?? null,
     updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id,code' }).select('id, code, name, focus').single()
-  if (error) throw new Error(`Falha ao salvar o treino ${workout.id}: ${error.message}`)
-  return data as WorkoutRow
+  }).eq('id', workout.id)
+  if (error) throw new Error(`Falha ao atualizar o treino: ${error.message}`)
 }
 
-async function syncExercises(workoutRow: WorkoutRow, exercises: Exercise[]): Promise<void> {
-  const exerciseRows = exercises.map((exercise, index) => ({
-      workout_id: workoutRow.id,
-      position: index + 1,
-      name: exercise.name,
-      planned_sets: exercise.sets,
-      reps_range: exercise.reps,
-      muscle_group: exercise.muscleGroup,
-      notes: exercise.notes || null,
-      updated_at: new Date().toISOString(),
-    }))
-  if (exerciseRows.length) {
-    const { error } = await supabase.from('exercises').upsert(exerciseRows, { onConflict: 'workout_id,position' })
-    if (error) throw new Error(`Falha ao salvar exercícios do treino ${workoutRow.code}: ${error.message}`)
-  }
+export async function saveRemoteExercise(userId: string, exercise: Exercise): Promise<Exercise> {
+  const { data, error } = await supabase.from('exercise_library').upsert({
+    id: /^[0-9a-f-]{36}$/i.test(exercise.id) ? exercise.id : undefined,
+    user_id: userId,
+    name: exercise.name,
+    planned_sets: exercise.sets,
+    reps_range: exercise.reps,
+    muscle_group: exercise.muscleGroup,
+    notes: exercise.notes || null,
+    archived_at: exercise.archivedAt ?? null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' }).select('id, name, planned_sets, reps_range, muscle_group, notes, archived_at').single()
+  if (error) throw new Error(`Falha ao salvar o exercício: ${error.message}`)
+  return toExercise(data as ExerciseRow)
+}
 
-  const { error: staleError } = await supabase
-    .from('exercises')
-    .delete()
-    .eq('workout_id', workoutRow.id)
-    .gt('position', exercises.length)
-  if (staleError) {
-    throw new Error(`Falha ao remover exercícios obsoletos do treino ${workoutRow.code}: ${staleError.message}`)
-  }
+export async function fetchExerciseLibrary(): Promise<Exercise[]> {
+  const { data, error } = await supabase.from('exercise_library')
+    .select('id, name, planned_sets, reps_range, muscle_group, notes, archived_at')
+    .order('name')
+  if (error) throw new Error(`Falha ao ler a biblioteca de exercícios: ${error.message}`)
+  return (data ?? []).map((row) => toExercise(row as ExerciseRow))
+}
+
+export async function replaceWorkoutExercises(workoutId: string, exercises: Exercise[]): Promise<void> {
+  const { error: deleteError } = await supabase.from('workout_exercises').delete().eq('workout_id', workoutId)
+  if (deleteError) throw new Error(`Falha ao atualizar exercícios do treino: ${deleteError.message}`)
+  if (!exercises.length) return
+  const { error } = await supabase.from('workout_exercises').insert(exercises.map((exercise, index) => ({
+    workout_id: workoutId,
+    exercise_id: exercise.id,
+    position: index + 1,
+  })))
+  if (error) throw new Error(`Falha ao associar exercícios ao treino: ${error.message}`)
+}
+
+export async function initializeRemoteWorkouts(_userId: string): Promise<Workout[]> {
+  return fetchRemoteWorkouts()
 }
 
 export async function replaceRemoteWorkouts(userId: string, workouts: Workout[]): Promise<Workout[]> {
   for (const workout of workouts) {
-    const row = await upsertWorkout(userId, workout)
-    await syncExercises(row, workout.exercises)
+    let workoutId = workout.id
+    if (/^[0-9a-f-]{36}$/i.test(workout.id)) {
+      await updateRemoteWorkout(workout)
+    } else {
+      const created = await createRemoteWorkout(userId, workout.name, workout.focus)
+      workoutId = created.id
+    }
+    const exercises = []
+    for (const exercise of workout.exercises) exercises.push(await saveRemoteExercise(userId, exercise))
+    await replaceWorkoutExercises(workoutId, exercises)
   }
   return fetchRemoteWorkouts()
-}
-
-export async function initializeRemoteWorkouts(userId: string): Promise<Workout[]> {
-  const { data: existingRows, error } = await supabase
-    .from('workouts')
-    .select('id, code, name, focus')
-    .eq('user_id', userId)
-    .in('code', workoutCodes)
-  if (error) throw new Error(`Falha ao verificar treinos do usuário: ${error.message}`)
-
-  const existingCodes = new Set((existingRows ?? []).map((row) => row.code as Workout['id']))
-  const missingWorkouts = initialWorkouts.filter((workout) => !existingCodes.has(workout.id))
-  if (missingWorkouts.length) await replaceRemoteWorkouts(userId, missingWorkouts)
-
-  const workouts = await fetchRemoteWorkouts()
-  if (!missingWorkouts.length) return workouts
-
-  const emptyWorkoutCodes = new Set(workouts.filter((workout) => workout.exercises.length === 0).map((workout) => workout.id))
-  if (emptyWorkoutCodes.size) {
-    const emptyWorkouts = initialWorkouts.filter((workout) => emptyWorkoutCodes.has(workout.id))
-    await replaceRemoteWorkouts(userId, emptyWorkouts)
-    return fetchRemoteWorkouts()
-  }
-  return workouts
 }

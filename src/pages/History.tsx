@@ -15,6 +15,12 @@ function sessionDuration(session: WorkoutSession) {
   return `${minutes} min`
 }
 
+function workoutIndicator(session: WorkoutSession) {
+  if (session.workoutId === 'A' || session.workoutId === 'B' || session.workoutId === 'C') return session.workoutId
+  const initial = session.workoutName.trim().charAt(0).toUpperCase()
+  return initial || 'T'
+}
+
 type ExerciseHistoryRow = {
   session: WorkoutSession
   exercise: WorkoutSession['exercises'][number]
@@ -83,7 +89,7 @@ export function History({ userId }: { userId?: string }) {
     </div>
     <Progression rows={filteredRows} chartRows={chartRows} maxChartLoad={maxChartLoad} selectedExerciseId={selectedExerciseId} />
     <div className="history-section-title"><h3>Sessões</h3><span>{filteredSessions.length} encontradas</span></div>
-    {filteredSessions.length ? <div className="history-list">{[...filteredSessions].sort((a, b) => new Date(b.finishedAt ?? b.startedAt).getTime() - new Date(a.finishedAt ?? a.startedAt).getTime()).map((session) => <button className="history-card" key={session.id} onClick={() => setSelectedSession(session)}><span className="workout-badge">{session.workoutId}</span><span className="history-card-main"><strong>{session.workoutName}</strong><small>{session.focus}</small><small>{formatDate(session.finishedAt ?? session.startedAt)}</small></span><span className="history-card-end"><small>{sessionDuration(session)}</small><Icon name="arrow" size={17} /></span></button>)}</div> : <div className="history-inline-empty">Nenhuma sessão concluída corresponde aos filtros.</div>}
+    {filteredSessions.length ? <div className="history-list">{[...filteredSessions].sort((a, b) => new Date(b.finishedAt ?? b.startedAt).getTime() - new Date(a.finishedAt ?? a.startedAt).getTime()).map((session) => <button className="history-card" key={session.id} onClick={() => setSelectedSession(session)}><span className="workout-badge">{workoutIndicator(session)}</span><span className="history-card-main"><strong>{session.workoutName}</strong><small>{session.focus}</small><small>{formatDate(session.finishedAt ?? session.startedAt)}</small></span><span className="history-card-end"><small>{sessionDuration(session)}</small><Icon name="arrow" size={17} /></span></button>)}</div> : <div className="history-inline-empty">Nenhuma sessão concluída corresponde aos filtros.</div>}
   </div>
 }
 

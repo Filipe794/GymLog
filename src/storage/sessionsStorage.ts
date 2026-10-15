@@ -14,7 +14,8 @@ function isSessionSet(value: unknown): value is SessionSet {
 function isSessionExercise(value: unknown): value is SessionExercise {
   if (!value || typeof value !== 'object') return false
   const exercise = value as Partial<SessionExercise>
-  return typeof exercise.exerciseId === 'string' &&
+  return (typeof exercise.id === 'string' || typeof exercise.id === 'undefined') &&
+    typeof exercise.exerciseId === 'string' &&
     typeof exercise.name === 'string' &&
     typeof exercise.muscleGroup === 'string' &&
     typeof exercise.plannedSets === 'number' &&
@@ -28,11 +29,11 @@ function isSession(value: unknown): value is WorkoutSession {
   if (!value || typeof value !== 'object') return false
   const session = value as Partial<WorkoutSession>
   return typeof session.id === 'string' &&
-    (session.workoutId === 'A' || session.workoutId === 'B' || session.workoutId === 'C') &&
+    typeof session.workoutId === 'string' &&
     typeof session.workoutName === 'string' &&
     typeof session.focus === 'string' &&
     typeof session.startedAt === 'string' &&
-    (session.status === 'in-progress' || session.status === 'completed') &&
+    (session.status === 'in-progress' || session.status === 'completed' || session.status === 'abandoned') &&
     Array.isArray(session.exercises) &&
     session.exercises.every(isSessionExercise)
 }
@@ -66,6 +67,16 @@ export function saveCompletedSessions(sessions: WorkoutSession[]): void {
   writeJson(SESSIONS_STORAGE_KEY, sessions)
 }
 
+export function saveAbandonedSession(session: WorkoutSession): void {
+  const existing = loadStoredSessions()
+  writeJson(SESSIONS_STORAGE_KEY, [...existing, session])
+}
+
+function loadStoredSessions(): WorkoutSession[] {
+  const value: unknown = readJson<unknown>(SESSIONS_STORAGE_KEY)
+  return Array.isArray(value) ? value.filter(isSession) : []
+}
+
 export function loadActiveSession(): WorkoutSession | null {
   const value: unknown = readJson<unknown>(ACTIVE_SESSION_STORAGE_KEY)
   return isSession(value) && value.status === 'in-progress' ? value : null
@@ -94,6 +105,7 @@ export function createSession(workout: Workout): WorkoutSession {
     startedAt: new Date().toISOString(),
     status: 'in-progress',
     exercises: workout.exercises.map((exercise) => ({
+      id: createId(),
       exerciseId: exercise.id,
       name: exercise.name,
       muscleGroup: exercise.muscleGroup,

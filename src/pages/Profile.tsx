@@ -9,7 +9,7 @@ type ProfileProps = {
   onDeleteAccount: (confirmation: string) => Promise<void>
 }
 
-const usernamePattern = /^[\p{L}\p{N}._-]{3,30}$/u
+const usernamePattern = /^[\p{L}\p{N}._\-]{3,30}$/u
 
 export function Profile({ user, username, loading, onSaveUsername, onDeleteAccount }: ProfileProps) {
   const [draftUsername, setDraftUsername] = useState('')
@@ -84,7 +84,7 @@ export function Profile({ user, username, loading, onSaveUsername, onDeleteAccou
       <section className="profile-card">
         <div className="profile-card-heading"><div className="profile-large-avatar">{(username ?? 'Usuário').slice(0, 2).toUpperCase()}</div><div><h3>{username ?? 'Usuário'}</h3><p>Perfil pessoal</p></div></div>
         <form className="profile-form" onSubmit={save}>
-          <label>Nome de usuário<input type="text" value={draftUsername} onChange={(event) => setDraftUsername(event.target.value)} minLength={3} maxLength={30} pattern="[\p{L}\p{N}._-]{3,30}" disabled={loading || saving} autoComplete="username" /></label>
+          <label>Nome de usuário<input type="text" value={draftUsername} onChange={(event) => setDraftUsername(event.target.value)} minLength={3} maxLength={30} pattern="[\p{L}\p{N}._\-]{3,30}" disabled={loading || saving} autoComplete="username" /></label>
           <label>E-mail<input type="email" value={user.email ?? ''} readOnly /></label>
           {feedback && <p className={`profile-feedback ${feedback.type}`} role="alert">{feedback.text}</p>}
           <button className="button-primary" type="submit" disabled={loading || saving}>{saving ? 'Salvando...' : 'Salvar alterações'}</button>

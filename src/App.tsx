@@ -12,7 +12,7 @@ import { Reports } from './pages/Reports'
 import { Workouts } from './pages/Workouts'
 import { Profile } from './pages/Profile'
 import type { Section } from './types'
-import { isSupabaseConfigured, supabase } from './lib/supabaseClient'
+import { clearLocalAuthSession, isSupabaseConfigured, supabase } from './lib/supabaseClient'
 import { useUserProfile } from './hooks/useUserProfile'
 import { deleteAuthenticatedAccount } from './services/accountService'
 
@@ -57,10 +57,12 @@ function App() {
 
   const handleDeleteAccount = async (confirmation: string) => {
     await deleteAuthenticatedAccount(confirmation)
-    await supabase.auth.signOut({ scope: 'local' })
+    clearLocalAuthSession()
     setUser(null)
+    setAuthMode(null)
     setActiveSection('dashboard')
     setMobileMenuOpen(false)
+    setSignOutError('')
     setAccountDeletedMessage('Sua conta foi excluída permanentemente.')
   }
 

@@ -15,13 +15,15 @@ export type Exercise = {
   reps: string
   muscleGroup: string
   notes?: string
+  archivedAt?: string | null
 }
 
 export type Workout = {
-  id: 'A' | 'B' | 'C'
+  id: string
   name: string
   focus: string
   exercises: Exercise[]
+  archivedAt?: string | null
 }
 
 export type SessionSet = {
@@ -31,6 +33,7 @@ export type SessionSet = {
 }
 
 export type SessionExercise = {
+  id?: string
   exerciseId: string
   name: string
   muscleGroup: string
@@ -47,6 +50,6 @@ export type WorkoutSession = {
   focus: string
   startedAt: string
   finishedAt?: string
-  status: 'in-progress' | 'completed'
+  status: 'in-progress' | 'completed' | 'abandoned'
   exercises: SessionExercise[]
 }

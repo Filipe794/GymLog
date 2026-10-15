@@ -79,6 +79,16 @@ h1 { font-family: Manrope, sans-serif; font-size: 27px; letter-spacing: -.8px; m
 .delete-warning { background: #fff3f0; border: 1px solid #f1c9c2; border-radius: 10px; color: #8f4941; font-size: 13px; line-height: 1.55; padding: 13px; }
 .landing-account-message { background: #eaf7d4; border: 1px solid #d5e9b7; border-radius: 10px; color: #557f24; font-size: 13px; margin: 20px auto 0; max-width: 1050px; padding: 12px 20px; width: calc(100% - 40px); }
 .add-workout-button { white-space: nowrap; }
+.session-actions { align-items: center; display: flex; gap: 8px; }
+.archived-section { background: #fff; border: 1px solid #edf0ee; border-radius: 13px; margin-top: 24px; padding: 16px; }
+.archived-section h3 { font-family: Manrope, sans-serif; font-size: 15px; margin: 0 0 10px; }
+.archived-section p { color: #89958f; font-size: 12px; margin: 0; }
+.archived-row { align-items: center; border-top: 1px solid #edf0ee; display: flex; justify-content: space-between; padding: 11px 0; }
+.archived-row span { color: #53645a; font-size: 13px; }
+.library-picker { background: #f7faef; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: min(34vh, 260px); overflow-y: auto; padding: 11px; }
+.library-picker strong { color: #557f24; font-size: 12px; }
+.library-picker button { background: #fff; border: 1px solid #dfead2; border-radius: 7px; color: #53645a; font-size: 12px; padding: 8px; text-align: left; }
+.library-picker button:hover { border-color: #9aca58; }
 .workout-tabs { border-bottom: 1px solid #e5eae7; display: flex; gap: 30px; margin-bottom: 25px; }
 .workout-tab { background: transparent; border-bottom: 2px solid transparent; color: #8d9792; display: flex; flex-direction: column; gap: 6px; padding: 0 4px 14px; text-align: left; }
 .workout-tab span { font-family: Manrope, sans-serif; font-size: 15px; font-weight: 700; }
@@ -105,8 +115,12 @@ h1 { font-family: Manrope, sans-serif; font-size: 27px; letter-spacing: -.8px; m
 .exercise-actions button:hover, .close-button:hover { background: #edf3e8; color: #557f24; }
 .exercise-actions button:disabled { color: #d4dad6; cursor: not-allowed; }
 .exercise-actions .danger:hover { background: #fff0ee; color: #c2584e; }
-.modal-backdrop { align-items: center; background: rgba(23, 33, 29, .35); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 10; }
-.exercise-form { background: #fff; border-radius: 18px; box-shadow: 0 18px 60px rgba(23, 33, 29, .18); max-width: 500px; padding: 25px; width: 100%; }
+.modal-backdrop { align-items: center; background: rgba(23, 33, 29, .35); display: flex; inset: 0; justify-content: center; overflow: auto; padding: 20px; position: fixed; z-index: 10; }
+.exercise-form { background: #fff; border-radius: 18px; box-shadow: 0 18px 60px rgba(23, 33, 29, .18); display: flex; flex-direction: column; max-height: calc(100vh - 40px); max-width: min(500px, 100%); overflow-y: auto; overflow-x: hidden; padding: 25px; width: 100%; }
+.confirmation-dialog { background: #fff; border-radius: 18px; box-shadow: 0 18px 60px rgba(23, 33, 29, .18); max-width: 440px; padding: 25px; width: 100%; }
+.confirmation-dialog h2 { font-family: Manrope, sans-serif; font-size: 21px; letter-spacing: -.5px; margin: 0 0 10px; }
+.confirmation-dialog > p:not(.eyebrow) { color: #89958f; font-size: 13px; line-height: 1.55; margin: 0; }
+.confirmation-dialog .form-actions { padding-top: 24px; }
 .form-header { align-items: start; display: flex; justify-content: space-between; margin-bottom: 23px; }
 .form-header h2 { font-family: Manrope, sans-serif; font-size: 21px; letter-spacing: -.5px; margin: 0; }
 .form-header .eyebrow { margin-bottom: 6px; }
@@ -116,7 +130,7 @@ h1 { font-family: Manrope, sans-serif; font-size: 27px; letter-spacing: -.8px; m
 .exercise-form input, .exercise-form textarea { background: #fbfcfb; border: 1px solid #e0e7e2; border-radius: 8px; color: #17211d; display: block; font: inherit; font-size: 13px; margin-top: 7px; outline: none; padding: 11px 12px; resize: vertical; width: 100%; }
 .exercise-form input:focus, .exercise-form textarea:focus { border-color: #8ebc54; box-shadow: 0 0 0 3px #eff8e4; }
 .form-grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
-.form-actions { display: flex; gap: 9px; justify-content: flex-end; margin-top: 24px; }
+.form-actions { background: #fff; display: flex; flex-shrink: 0; gap: 9px; justify-content: flex-end; margin-top: auto; padding-top: 24px; position: sticky; bottom: 0; }
 .button-secondary { background: #f1f4f2; border-radius: 9px; color: #68766f; font-size: 13px; font-weight: 600; padding: 12px 17px; }
 .button-secondary:hover { background: #e8ece9; }
 .session-page, .history-page { width: 100%; }

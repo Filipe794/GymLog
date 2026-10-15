@@ -1,11 +1,13 @@
 import type { SessionSet, Workout, WorkoutSession } from '../types'
+import { useState } from 'react'
 import { Icon } from './Icon'
 
 type WorkoutSessionProps = {
   session: WorkoutSession
   history: WorkoutSession[]
   onChange: (session: WorkoutSession) => void
-  onFinish: () => void
+  onFinish: () => void | Promise<void>
+  onAbandon: () => void | Promise<void>
   onCancel: () => void
 }
 
@@ -16,7 +18,8 @@ function lastExerciseSession(history: WorkoutSession[], exerciseId: string, curr
   return matches[matches.length - 1]
 }
 
-export function WorkoutSessionView({ session, history, onChange, onFinish, onCancel }: WorkoutSessionProps) {
+export function WorkoutSessionView({ session, history, onChange, onFinish, onAbandon, onCancel }: WorkoutSessionProps) {
+  const [finishing, setFinishing] = useState(false)
   const updateExercise = (exerciseId: string, update: (exercise: WorkoutSession['exercises'][number]) => WorkoutSession['exercises'][number]) => {
     onChange({ ...session, exercises: session.exercises.map((exercise) => exercise.exerciseId === exerciseId ? update(exercise) : exercise) })
   }
@@ -36,10 +39,28 @@ export function WorkoutSessionView({ session, history, onChange, onFinish, onCan
   const removeSet = (exerciseId: string, setId: string) => updateExercise(exerciseId, (exercise) => exercise.sets.length <= 1 ? exercise : { ...exercise, sets: exercise.sets.filter((set) => set.id !== setId) })
   const toggleCompleted = (exerciseId: string) => updateExercise(exerciseId, (exercise) => ({ ...exercise, completed: !exercise.completed }))
   const completedCount = session.exercises.filter((exercise) => exercise.completed).length
+  const finish = async () => {
+    if (finishing) return
+    setFinishing(true)
+    try {
+      await onFinish()
+    } finally {
+      setFinishing(false)
+    }
+  }
+  const abandon = async () => {
+    if (finishing) return
+    setFinishing(true)
+    try {
+      await onAbandon()
+    } finally {
+      setFinishing(false)
+    }
+  }
 
   return <div className="session-page">
     <div className="session-header"><button className="back-link" onClick={onCancel}><Icon name="arrow" size={17} />Voltar para treinos</button><p className="eyebrow">SESSÃO EM ANDAMENTO</p><h2>{session.workoutName} <span>·</span> {session.focus}</h2><p className="session-started">Iniciada em {new Date(session.startedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p></div>
-    <div className="session-progress"><div><strong>{completedCount}/{session.exercises.length}</strong><span> exercícios concluídos</span></div><button className="button-primary" onClick={onFinish}>Finalizar treino</button></div>
+    <div className="session-progress"><div><strong>{completedCount}/{session.exercises.length}</strong><span> exercícios concluídos</span></div><div className="session-actions"><button className="button-secondary" disabled={finishing} onClick={abandon}>Abandonar treino</button><button className="button-primary" disabled={finishing} onClick={finish}>{finishing ? 'Salvando...' : 'Finalizar treino'}</button></div></div>
     <div className="session-exercises">{session.exercises.map((exercise, index) => {
       const previous = lastExerciseSession(history, exercise.exerciseId, session.id)
       return <article className={`session-exercise ${exercise.completed ? 'completed' : ''}`} key={exercise.exerciseId}>
