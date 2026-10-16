@@ -34,8 +34,8 @@ export function LandingPage({ onAuth, message }: LandingPageProps) {
     <div className="landing-page">
       <header className="landing-navbar">
         <a className="landing-brand" href="#inicio" onClick={() => navigateTo('inicio')}>
-          <span className="brand-mark">M</span>
-          <span>my<span>academy</span></span>
+          <span className="brand-mark">G</span>
+          <span>Gym<span>Log</span></span>
         </a>
         <button className="landing-menu-toggle" type="button" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen}>
           <Icon name={menuOpen ? 'close' : 'menu'} />
@@ -100,7 +100,7 @@ export function LandingPage({ onAuth, message }: LandingPageProps) {
         <section className="landing-cta landing-container"><div><p className="landing-kicker">SEU PRÓXIMO PASSO</p><h2>Sua próxima evolução começa com organização.</h2><p>Crie sua conta, organize sua rotina e comece a registrar seus treinos.</p></div><div className="landing-cta-actions"><button className="landing-button landing-button-accent" type="button" onClick={() => openAuth('signup')}>Criar minha conta <Icon name="arrow" size={17} /></button><button className="landing-button landing-button-light" type="button" onClick={() => openAuth('login')}>Entrar na minha conta</button></div></section>
       </main>
 
-      <footer className="landing-footer landing-container"><div><a className="landing-brand" href="#inicio" onClick={() => navigateTo('inicio')}><span className="brand-mark">M</span><span>my<span>academy</span></span></a><p>Organize seus treinos. Acompanhe sua evolução.</p></div><div className="landing-footer-links"><div><b>Navegação</b><button type="button" onClick={() => navigateTo('funcionalidades')}>Funcionalidades</button><button type="button" onClick={() => navigateTo('como-funciona')}>Como funciona</button><button type="button" onClick={() => navigateTo('beneficios')}>Benefícios</button></div><div><b>Acesso</b><button type="button" onClick={() => openAuth('login')}>Entrar</button><button type="button" onClick={() => openAuth('signup')}>Criar conta</button></div></div><div className="landing-footer-bottom"><span>© {currentYear} myacademy. Todos os direitos reservados.</span><span>Feito para evoluir no seu ritmo.</span></div></footer>
+      <footer className="landing-footer landing-container"><div><a className="landing-brand" href="#inicio" onClick={() => navigateTo('inicio')}><span className="brand-mark">G</span><span>Gym<span>Log</span></span></a><p>Organize seus treinos. Acompanhe sua evolução.</p></div><div className="landing-footer-links"><div><b>Navegação</b><button type="button" onClick={() => navigateTo('funcionalidades')}>Funcionalidades</button><button type="button" onClick={() => navigateTo('como-funciona')}>Como funciona</button><button type="button" onClick={() => navigateTo('beneficios')}>Benefícios</button></div><div><b>Acesso</b><button type="button" onClick={() => openAuth('login')}>Entrar</button><button type="button" onClick={() => openAuth('signup')}>Criar conta</button></div></div><div className="landing-footer-bottom"><span>© {currentYear} GymLog. Todos os direitos reservados.</span><span>Feito para evoluir no seu ritmo.</span></div></footer>
     </div>
   )
 }

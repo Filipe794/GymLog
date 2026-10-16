@@ -12,7 +12,7 @@ type SidebarProps = {
 export function Sidebar({ activeSection, onNavigate, isOpen, onClose }: SidebarProps) {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="brand"><span className="brand-mark">M</span><span>my<span>academy</span></span></div>
+      <div className="brand"><span className="brand-mark">G</span><span>Gym<span>Log</span></span></div>
       <button className="mobile-menu-close" type="button" aria-label="Fechar menu" onClick={onClose}><Icon name="close" size={20} /></button>
       <nav className="sidebar-nav" aria-label="Navegação principal">
         {navigationItems.map((item) => (

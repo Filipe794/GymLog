@@ -18,7 +18,7 @@ function downloadCsv(rows: ReturnType<typeof getExerciseRows>) {
   const url = URL.createObjectURL(new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8' }))
   const link = document.createElement('a')
   link.href = url
-  link.download = `myacademy-relatorio-${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = `gymlog-relatorio-${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }
@@ -27,7 +27,7 @@ function printReport(rows: ReturnType<typeof getExerciseRows>, period: string) {
   const reportWindow = window.open('', '_blank', 'width=900,height=700')
   if (!reportWindow) return
   const totalVolume = rows.reduce((sum, row) => sum + row.totalVolume, 0)
-  reportWindow.document.write(`<html><head><title>Relatório My Academy</title><style>body{font-family:Arial;color:#17211d;padding:32px}h1{margin-bottom:4px}p{color:#627069}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{color:#557f24} </style></head><body><h1>Relatório de treinos</h1><p>Período: ${period === 'all' ? 'todo o período' : `últimos ${period} dias`} · Gerado em ${new Date().toLocaleString('pt-BR')}</p><p><strong>${rows.length}</strong> registros de exercícios · <strong>${totalVolume.toLocaleString('pt-BR')} kg</strong> de volume válido</p><table><thead><tr><th>Data</th><th>Treino</th><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga máx.</th><th>Volume</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${formatDate(row.session.finishedAt ?? row.session.startedAt)}</td><td>${row.session.workoutName}</td><td>${row.exercise.name}</td><td>${row.validSets}</td><td>${row.exercise.sets.map((set) => set.reps ?? '—').join(' / ')}</td><td>${row.sessionMaxLoad === null ? '—' : `${row.sessionMaxLoad} kg`}</td><td>${row.totalVolume.toLocaleString('pt-BR')} kg</td></tr>`).join('')}</tbody></table><script>window.onload=()=>window.print()</script></body></html>`)
+  reportWindow.document.write(`<html><head><title>Relatório GymLog</title><style>body{font-family:Arial;color:#17211d;padding:32px}h1{margin-bottom:4px}p{color:#627069}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{color:#557f24} </style></head><body><h1>Relatório de treinos</h1><p>Período: ${period === 'all' ? 'todo o período' : `últimos ${period} dias`} · Gerado em ${new Date().toLocaleString('pt-BR')}</p><p><strong>${rows.length}</strong> registros de exercícios · <strong>${totalVolume.toLocaleString('pt-BR')} kg</strong> de volume válido</p><table><thead><tr><th>Data</th><th>Treino</th><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga máx.</th><th>Volume</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${formatDate(row.session.finishedAt ?? row.session.startedAt)}</td><td>${row.session.workoutName}</td><td>${row.exercise.name}</td><td>${row.validSets}</td><td>${row.exercise.sets.map((set) => set.reps ?? '—').join(' / ')}</td><td>${row.sessionMaxLoad === null ? '—' : `${row.sessionMaxLoad} kg`}</td><td>${row.totalVolume.toLocaleString('pt-BR')} kg</td></tr>`).join('')}</tbody></table><script>window.onload=()=>window.print()</script></body></html>`)
   reportWindow.document.close()
 }
 
